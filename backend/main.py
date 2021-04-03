@@ -13,7 +13,5 @@ if __name__=="__main__":
     cfg = ConfigInterface()
     host = cfg.get(["host"])
     port = cfg.get(["port"])
-    backend_path = cfg.get(["backend_path"])
     print(host, port)
-    print(backend_path)
-    app.run(host=host, port=port, debug=True)
+    #app.run(host=host, port=port, debug=True)

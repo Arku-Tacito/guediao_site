@@ -1,4 +1,5 @@
 #!/bin/bash
+# 启动脚本
 # 设置应用的相关路径
 export ROOTPATH=$PWD
 export BACKENDPATH=${ROOTPATH}/backend
@@ -10,5 +11,11 @@ export MODULEPATH=${BACKENDPATH}/modules
 export PYTHONPATH=$PYTHONPATH:$BACKENDPATH
 export APPDEVENV=$DEVENV/guediao_site_env
 source $APPDEVENV/bin/activate
+# 需要初始化，调用各模块初始化脚本
+if [ $1 == "init" ];then
+    python3 ${CONFIGPATH}/config_init.py
+fi
 # 启动应用
 python3 ${BACKENDPATH}/main.py
+
+python3 ${MODULEPATH}/cypher/cypher_interface.py
