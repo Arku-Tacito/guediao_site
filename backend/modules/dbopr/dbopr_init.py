@@ -5,18 +5,18 @@
 @brief: 初始化数据库脚本
 """
 # _*_ coding: utf-8 _*_
-from backend.config.config_interface import ConfigInterface, console_log, get_line_cur
-from backend.modules.dbopr.dbopr import DBOpr
-from backend.modules.cypher.cypher_interface import Cypher
+from backend.config.configbase import ConfigBase, console_log, get_line_cur
+from backend.modules.dbopr.dboprbase import DBoprBase
+from backend.modules.cypher.cypherbase import CypherBase
 
-def KeyInit():
+def key_init():
     """
     初始化密钥数据库
     ------------
     @param:
     @return: 0成功 -1失败
     """
-    cfg = ConfigInterface()
+    cfg = ConfigBase()
     
     # 获取原始密钥
     orin_key = cfg.get(["ori_key"])
@@ -28,7 +28,7 @@ def KeyInit():
         if len(orin_key) >=13:
             console_log(text="Warnning: The ori_key is too long(>=13) to generate different keys.")
     # 构造各种密钥并自身加密
-    cypher = Cypher(orin_key)
+    cypher = CypherBase(orin_key)
     account_activate_key = cypher.encrypt_AES(orin_key + "_act")   #激活账号的密钥
     user_important_key = cypher.encrypt_AES(orin_key + "_usr")  #用户安全数据密钥
     session_token_key = cypher.encrypt_AES(orin_key + "_tok")   #会话token密钥
@@ -46,22 +46,19 @@ def KeyInit():
     ))
 
     # 创建数据库，存储密钥
-    dbopr = DBOpr(dbname="shadow", dbtype=1)
+    dbopr = DBoprBase(dbname="shadow", dbtype=1)
+    cl_sql = "drop table if exists Shadow"
+    ret = dbopr.execute(cl_sql) #先删除原来的表
+    if ret == None:
+        return -1
+
     sql = "create table Shadow(\
             name char(32),\
             val  char(256));"
     ret = dbopr.execute(sql)
     if ret == None:
-        # 可能表存在，删表见一次试试
-        console_log(text="Table maybe existed already. Try to delete and create new one.")
-        dl_sql = "drop table Shadow"
-        ret = dbopr.execute(dl_sql)
-        if ret == None:
-            return -1
-        else:
-            ret = dbopr.execute(sql)
-        if ret == None:
-            return -1
+        return -1       
+
     shadows = {"activate": account_activate_key, "user": user_important_key,
             "seesion":  session_token_key, "log": log_message_key,
             "business": business_message_key, "salt": hash_salt}
@@ -75,9 +72,41 @@ def KeyInit():
             success += 1
     
     console_log(text="{} keys insert successfully.".format(success))
+    
+    sql = "select * from Shadow"
+    ret = dbopr.execute(sql)
+    if ret != None:
+        console_log(text="{}".format(ret))
     return 0
-        
+
+def account_init():
+    """""
+    账号表创建
+    ------------
+    @param: 
+    @return: 0成功 -1失败
+    """""
+    dbopr = DBoprBase("account", dbtype=1)
+    cl_sql = "drop table if exists Account"
+    ret = dbopr.execute(cl_sql)
+    if ret == None:
+        return -1
+    
+    sql = "create table Account(\
+            user nchar(1024) unique,\
+            nickname char(1024),\
+            passwd char(2048),\
+            email char(2048)\
+            );"
+    ret = dbopr.execute(sql)
+    if ret == None:
+        return -1
+    else:
+        console_log(text="Init table Account successfully.")
+        return 0
+
 
 if __name__ == "__main__":
     console_log(text="Init Database begin...")
-    KeyInit()
+    key_init()
+    account_init()

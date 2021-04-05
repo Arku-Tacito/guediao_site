@@ -2,7 +2,7 @@
 @author: Arku Xu
 @date: 2021-03-27 14:12:34
 @Email: arku.xu@gmail.com
-@brief: 配置读写接口
+@brief: 配置读写基类
 """
 # _*_ coding: utf-8 _*_
 import json
@@ -19,16 +19,16 @@ def console_log(line=0, text="", name=None):
     @return: 
     """""
     if name == None:
-        name = ""
+        name = "INFO"
     if line <= 0 or type(line) != int:
         log_test = "[{}]: {}".format(str(name), str(text))
     else:
         log_test = "[{}] line {}: {}".format(str(name), line, str(text))
     print(log_test)
 
-class ConfigInterface:
+class ConfigBase:
     """""
-    配置读写接口类
+    配置读写接口基类
     -------------
     new: 创建新配置文件
     get: 获取json配置数据

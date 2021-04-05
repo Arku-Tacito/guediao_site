@@ -2,17 +2,17 @@
 @author: Arku Xu
 @date: 2021-03-31 23:52:31
 @Email: arku.xu@gmail.com
-@brief: 加解密模块接口
+@brief: 加解密模块基类
 """
 # _*_ coding: utf-8 _*_
 import hashlib
 import base64
 from Crypto.Cipher import AES
-from backend.config.config_interface import ConfigInterface, console_log, get_line_cur
+from backend.config.configbase import ConfigBase, console_log, get_line_cur
 
-class Cypher:
+class CypherBase:
     """""
-    加解密模块类
+    加解密模块基类
     加密密钥限定在16位
     -------------
     encrypt_AES: AES加密

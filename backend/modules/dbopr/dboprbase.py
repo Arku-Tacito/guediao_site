@@ -2,16 +2,17 @@
 @author: Arku Xu
 @date: 2021-04-01 22:56:53
 @Email: arku.xu@gmail.com
-@brief: 基础数据库操作接口
+@brief: 数据库操作接口基类
 """
 # _*_ coding: utf-8 _*_
 import sqlite3
 import os, sys
-from backend.config.config_interface import ConfigInterface, console_log, get_line_cur
+from backend.config.configbase import ConfigBase, console_log, get_line_cur
 
-class DBOpr:
+class DBoprBase:
     """""
     规则库操作接口
+    数据库类型：["business", "account", "log"]
     -------------
     setdb: 手动设置规则库名
     execute: 基础执行sql语句
@@ -65,14 +66,16 @@ class DBOpr:
         self.__dbname = os.path.join(path, dbname) 
         return 0
 
-    def execute(self, sql=None):
+    def execute(self, sql, vals=None):
         """""
         基础执行sql语句
         非安全函数
         ------------
         @param: sql     sql语句
-        @return:        成功返回结果 失败返回None
+        @param: vals    占位符下的值，元组形式
+        @return:        成功返回结果list  失败返回None
         """""
+
         # 建立连接
         self.__conn__()
         if self.__dbconn == None:
@@ -86,10 +89,41 @@ class DBOpr:
             self.__close__()
             return None
         try:
-            cur.execute(sql)
-            self.__close__()
-            return cur
+            if type(vals) != tuple:
+                cur.execute(sql)
+            else:
+                cur.execute(sql, vals)
+            self.__dbconn.commit()
         except Exception as e:
             console_log(get_line_cur().f_lineno, e)
             self.__close__()
             return None
+        
+        # 返回结果
+        result = []
+        for uni in cur:
+            result.append(uni)
+        self.__close__()
+        return result
+    
+    def isexist(self, table):
+        """""
+        表是否存在
+        ------------
+        @param: table   表名
+        @return: True 存在 False 不存在
+        """""
+        if type(table) != str or table == "":
+            console_log(get_line_cur().f_lineno, "Invalid table name.")
+            return False
+
+        # 查找表
+        sql = "SELECT count(*) FROM sqlite_master WHERE type=\"table\" AND name = ?"
+        ret = self.execute(sql, (table,))
+        if ret == None:
+            return False
+        elif ret[0][0] == 0:
+            return False
+        else:
+            return True
+        

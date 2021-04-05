@@ -13,9 +13,11 @@ export APPDEVENV=$DEVENV/guediao_site_env
 source $APPDEVENV/bin/activate
 # 需要初始化，调用各模块初始化脚本
 if [ $1 == "init" ];then
+    echo "Initializing..."
     python3 ${CONFIGPATH}/config_init.py
+    python3 ${MODULEPATH}/dbopr/dbopr_init.py
 fi
 # 启动应用
+echo "Start app..."
 python3 ${BACKENDPATH}/main.py
 
-python3 ${MODULEPATH}/dbopr/dbopr_init.py
