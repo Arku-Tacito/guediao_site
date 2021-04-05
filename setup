@@ -18,4 +18,4 @@ fi
 # 启动应用
 python3 ${BACKENDPATH}/main.py
 
-python3 ${MODULEPATH}/cypher/cypher_interface.py
+python3 ${MODULEPATH}/dbopr/dbopr_init.py

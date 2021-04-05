@@ -5,25 +5,34 @@
 @brief: 配置读写接口
 """
 # _*_ coding: utf-8 _*_
-import os, sys
 import json
 
+import os, sys
 get_line_cur = sys._getframe
-
-def console_log(line=0, text=""):
+def console_log(line=0, text="", name=None):
     """""
     调试信息打印到控制台
     ------------
-    @param: line 行数  text 自定义信息
+    @param: name 函数名或文件名，非必须
+    @param: line 行数,非必须  
+    @param: text 自定义信息
     @return: 
     """""
-    log_test = "[{}] line {}: {}".format(__name__, line, str(text))
+    if name == None:
+        name = ""
+    if line <= 0 or type(line) != int:
+        log_test = "[{}]: {}".format(str(name), str(text))
+    else:
+        log_test = "[{}] line {}: {}".format(str(name), line, str(text))
     print(log_test)
 
 class ConfigInterface:
     """""
     配置读写接口类
     -------------
+    new: 创建新配置文件
+    get: 获取json配置数据
+    set: 设置配置值
     """""
     __json_data = None
     __path_dir = os.environ.get("CONFIGPATH")
@@ -73,7 +82,7 @@ class ConfigInterface:
             console_log(get_line_cur().f_lineno, "No data.")
             return -1
         if type(self.__json_data) != dict:
-            console_log(get_line_cur().f_lineno, "Wrong data type:{}.", type(self.__json_data))
+            console_log(get_line_cur().f_lineno, "Wrong data type:{}.".format(type(self.__json_data)))
             return -1
             
         # 写数据
