@@ -1,0 +1,13 @@
+#!/bin/bash
+# 调试脚本
+# 设置应用的相关路径
+export ROOTPATH=$PWD
+export BACKENDPATH=${ROOTPATH}/backend
+export FRONTENDPATH=${ROOTPATH}/frontend
+export CONFIGPATH=${BACKENDPATH}/config
+export DATAFIGPATH=${BACKENDPATH}/data
+export MODULEPATH=${BACKENDPATH}/modules
+# 设置python环境
+export PYTHONPATH=$PYTHONPATH:$BACKENDPATH
+export APPDEVENV=$DEVENV/guediao_site_env
+source $APPDEVENV/bin/activate
