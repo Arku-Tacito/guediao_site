@@ -26,15 +26,15 @@ class MailBase:
     # __port = 465
     # __timeout = 10
     
-    def __init__(self):
+    def __init__(self, cfg_file="mail_config.json"):
         """""
         初始化配置
         ------------
-        @param: 
+        @param: cfg_file 配置文件
         @return: 
         """""
         # 获取配置
-        cfgbase = ConfigBase("mail_config.json")    #邮件配置文件
+        cfgbase = ConfigBase(cfg_file)    #邮件配置文件
         self.__server = cfgbase.get(["smtp_server"])    #smtp服务器
         self.__sender_addr = cfgbase.get(["sender", "addr"])    #发送者邮箱
         self.__sender_passwd = cfgbase.get(["sender", "passwd"])    #发送者密钥

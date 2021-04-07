@@ -1,0 +1,5 @@
+{
+    "outfile": "test.log",
+    "max_backup_num": 3,
+    "max_size_bytes": 2
+}

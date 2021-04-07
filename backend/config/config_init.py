@@ -6,6 +6,11 @@
 """
 # _*_ coding: utf-8 _*_
 from backend.config.configbase import ConfigBase
+from backend.modules.logopr.logbase import LogBase
+import os, sys
 
 if __name__=="__main__":
-    pass
+    test_log = LogBase(__name__).config(level="info")
+    test_log.debug("hey, debug")
+    test_log.info("hey, info")
+    test_log.critical("hey, critical")
