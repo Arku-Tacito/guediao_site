@@ -8,7 +8,10 @@
 import hashlib
 import base64
 from Crypto.Cipher import AES
-from backend.config.configbase import ConfigBase, console_log, get_line_cur
+from backend.config.configbase import ConfigBase
+from backend.modules.logopr.logbase import Log
+
+log = Log(__name__).config()
 
 class CypherBase:
     """""
@@ -35,7 +38,7 @@ class CypherBase:
         if key == None:
             return
         if type(key) != str:
-            console_log(get_line_cur().f_lineno, "Invalid Key. Use default key.")
+            log.debug("Invalid Key. Use default key.")
         # key长度超过16截断，不够补齐
         elif len(key) > 16:
             self.__key = key[:16].encode('utf-8')
@@ -50,7 +53,7 @@ class CypherBase:
         @return: 成功返回文本bytes 失败返回None
         """""
         if type(text) != str:
-            console_log(get_line_cur().f_lineno, "Invalid text.")
+            log.debug("Invalid text.")
             return None
         if type(fill) != str or len(fill) != 1:
             fill_char = '\0'
@@ -75,7 +78,7 @@ class CypherBase:
         @return: 成功返回密文 失败返回None
         """""
         if type(text) != str:
-            console_log(get_line_cur().f_lineno, "Invalid text.")
+            log.debug("Invalid text.")
             return None
 
         # 加密
@@ -95,7 +98,7 @@ class CypherBase:
         @return: 成功返回明文 失败返回None
         """""
         if type(text) != str:
-            console_log(get_line_cur().f_lineno, "Invalid text.")
+            log.debug("Invalid text.")
             return None
         
         # 解码
@@ -114,7 +117,7 @@ class CypherBase:
         @return: 成功返回哈希值 失败返回None
         """
         if type(text) != str:
-            console_log(get_line_cur().f_lineno, "Invalid text.")
+            log.debug("Invalid text.")
             return None
         if salt == None or type(salt) != str:
             hash_salt = self.__salt

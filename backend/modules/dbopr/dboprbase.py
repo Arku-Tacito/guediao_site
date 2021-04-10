@@ -7,7 +7,10 @@
 # _*_ coding: utf-8 _*_
 import sqlite3
 import os, sys
-from backend.config.configbase import ConfigBase, console_log, get_line_cur
+from backend.config.configbase import ConfigBase
+from backend.modules.logopr.logbase import Log
+
+log = Log(__name__).config()
 
 class DBoprBase:
     """""
@@ -30,10 +33,10 @@ class DBoprBase:
         @return: 
         """""
         if dbname == None:
-            console_log(get_line_cur().f_lineno, "None database init.")
+            log.debug("None database init.")
             return
         elif dbtype < 0 or dbtype >= len(self.__dbtype):
-            console_log(get_line_cur().f_lineno, "Invalid dbtype. Auto set type: 0")
+            log.debug("Invalid dbtype. Auto set type: 0")
             dbtype = 0
         path = os.path.join(os.getenv("DATAFIGPATH"), self.__dbtype[dbtype])
         self.__dbname = os.path.join(path, dbname)
@@ -42,7 +45,7 @@ class DBoprBase:
         try:
             self.__dbconn = sqlite3.connect(self.__dbname)
         except Exception as e:
-            console_log(get_line_cur().f_lineno, e)
+            log.debug(e)
 
     def __close__(self):
         if self.__dbconn != None:
@@ -57,10 +60,10 @@ class DBoprBase:
         @return: 0成功 -1失败 
         """""
         if dbname == None:
-            console_log(get_line_cur().f_lineno, "None database init.")
+            log.error("None database init.")
             return -1
         elif len(dbtype) < 0 or len(dbtype) >= len(self.__dbtype):
-            console_log(get_line_cur().f_lineno, "Invalid dbtype. Auto set type: 0")
+            log.debug("Invalid dbtype. Auto set type: 0")
             dbtype = 0
         path = os.path.join(os.getenv("DATAFIGPATH"), self.__dbtype[dbtype])
         self.__dbname = os.path.join(path, dbname) 
@@ -79,13 +82,13 @@ class DBoprBase:
         # 建立连接
         self.__conn__()
         if self.__dbconn == None:
-            console_log(get_line_cur().f_lineno, "Connet to {} failed.".format(self.__dbname))
+            log.debug("Connet to {} failed.".format(self.__dbname))
             return None
         cur = self.__dbconn.cursor()
 
         # 执行sql语句
         if type(sql) != str:
-            console_log(get_line_cur().f_lineno, "Sql must be a string.")
+            log.debug("Sql must be a string.")
             self.__close__()
             return None
         try:
@@ -95,7 +98,7 @@ class DBoprBase:
                 cur.execute(sql, vals)
             self.__dbconn.commit()
         except Exception as e:
-            console_log(get_line_cur().f_lineno, e)
+            log.debug(e)
             self.__close__()
             return None
         
@@ -114,7 +117,7 @@ class DBoprBase:
         @return: True 存在 False 不存在
         """""
         if type(table) != str or table == "":
-            console_log(get_line_cur().f_lineno, "Invalid table name.")
+            log.debug("Invalid table name.")
             return False
 
         # 查找表

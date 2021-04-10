@@ -5,9 +5,12 @@
 @brief: 初始化数据库脚本
 """
 # _*_ coding: utf-8 _*_
-from backend.config.configbase import ConfigBase, console_log, get_line_cur
+from backend.config.configbase import ConfigBase
 from backend.modules.dbopr.dboprbase import DBoprBase
 from backend.modules.cypher.cypherbase import CypherBase
+from backend.modules.logopr.logbase import Log
+
+log = Log(__name__).config()
 
 def key_init():
     """
@@ -21,12 +24,12 @@ def key_init():
     # 获取原始密钥
     orin_key = cfg.get(["ori_key"])
     if orin_key == None:
-        console_log(text="Getting ori_key failed.")
+        log.error("Getting ori_key failed.")
         return -1
     else:
-        console_log(text="Getting ori_key: {}".format(orin_key))
+        log.debug("Getting ori_key: {}".format(orin_key))
         if len(orin_key) >=13:
-            console_log(text="Warnning: The ori_key is too long(>=13) to generate different keys.")
+            log.warning("Warnning: The ori_key is too long(>=13) to generate different keys.")
     # 构造各种密钥并自身加密
     cypher = CypherBase(orin_key)
     account_activate_key = cypher.encrypt_AES(orin_key + "_act")   #激活账号的密钥
@@ -36,7 +39,7 @@ def key_init():
     business_message_key = cypher.encrypt_AES(orin_key + "_bsn")    #业务安全数据密钥
     hash_salt = cypher.encrypt_AES(orin_key + "_slt")   #哈希盐值 
     
-    console_log(text="Generate keys:\nact:{} usr:{} tok:{}\nlog:{} bsn:{} slt:{}".format(
+    log.debug("Generate keys:\nact:{} usr:{} tok:{}\nlog:{} bsn:{} slt:{}".format(
         cypher.decrypt_AES(account_activate_key), 
         cypher.decrypt_AES(user_important_key),
         cypher.decrypt_AES(session_token_key),
@@ -67,16 +70,16 @@ def key_init():
         sql = "insert into Shadow values('{}', '{}')".format(uni, shadows[uni])
         ret = dbopr.execute(sql)
         if ret == None:
-            console_log(text="Insert key [{} : {}] failed.".format(uni, shadows[uni]))
+            log.debug("Insert key [{} : {}] failed.".format(uni, shadows[uni]))
         else:
             success += 1
     
-    console_log(text="{} keys insert successfully.".format(success))
+    log.debug("{} keys insert successfully.".format(success))
     
     sql = "select * from Shadow"
     ret = dbopr.execute(sql)
     if ret != None:
-        console_log(text="{}".format(ret))
+        log.debug("{}".format(ret))
     return 0
 
 def account_init():
@@ -93,6 +96,7 @@ def account_init():
         return -1
     
     sql = "create table Account(\
+            uid interger primary key,\
             user nchar(1024) unique,\
             nickname char(1024),\
             passwd char(2048),\
@@ -102,11 +106,11 @@ def account_init():
     if ret == None:
         return -1
     else:
-        console_log(text="Init table Account successfully.")
+        log.debug("Init table Account successfully.")
         return 0
 
 
 if __name__ == "__main__":
-    console_log(text="Init Database begin...")
+    log.debug("Init Database begin...")
     key_init()
     account_init()
