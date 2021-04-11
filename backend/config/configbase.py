@@ -29,6 +29,7 @@ def console_log(line=0, text="", name=None):
 class ConfigBase:
     """""
     配置读写接口基类
+    未使用文件锁，不安全
     -------------
     new: 创建新配置文件
     get: 获取json配置数据

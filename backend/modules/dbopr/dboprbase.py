@@ -16,9 +16,13 @@ class DBoprBase:
     """""
     规则库操作接口
     数据库类型：["business", "account", "log"]
+    数据库的连接和关闭一般需要手动调用接口
     -------------
     setdb: 手动设置规则库名
     execute: 基础执行sql语句
+    isexist: 表是否存在
+    connet: 连接数据库
+    close: 关闭连接
     """""
     __dbname = ""   # 数据库文件
     __dbconn = None # 数据连接
@@ -46,11 +50,24 @@ class DBoprBase:
             self.__dbconn = sqlite3.connect(self.__dbname)
         except Exception as e:
             log.debug(e)
+            return -1
+        
+        if self.__dbconn != None:
+            return 0
+        else:
+            log.debug("db connet is null.")
+            return -1
 
     def __close__(self):
-        if self.__dbconn != None:
+        if self.__dbconn == None:
+            return 0
+
+        try:    
             self.__dbconn.close()
-            return
+            return 0
+        except Exception as e:
+            log.debug(e)
+            return -1
 
     def setdb(self, dbname, dbtype=0):
         """""
@@ -60,7 +77,7 @@ class DBoprBase:
         @return: 0成功 -1失败 
         """""
         if dbname == None:
-            log.error("None database init.")
+            log.debug("None database init.")
             return -1
         elif len(dbtype) < 0 or len(dbtype) >= len(self.__dbtype):
             log.debug("Invalid dbtype. Auto set type: 0")
@@ -69,27 +86,46 @@ class DBoprBase:
         self.__dbname = os.path.join(path, dbname) 
         return 0
 
+    def connet(self):
+        """""
+        连接数据库
+        ------------
+        @param: 
+        @return: 0成功 -1失败
+        """""
+        ret = self.__conn__()
+        return ret
+
+    def close(self):
+        """""
+        关闭数据库
+        ------------
+        @param: 
+        @return: 0成功 -1失败
+        """""
+        ret = self.__close__()
+        return ret
+
     def execute(self, sql, vals=None):
         """""
-        基础执行sql语句
+        执行单条sql语句
         非安全函数
         ------------
-        @param: sql     sql语句
-        @param: vals    占位符下的值，元组形式
-        @return:        成功返回结果list  失败返回None
+        @param: sql     单条sql语句
+        @param: vals    占位符下的值
+        @return:        成功返回结果list(无结果则为空表)  失败返回None
         """""
 
-        # 建立连接
-        self.__conn__()
+        # 连接不正常，停止执行
         if self.__dbconn == None:
-            log.debug("Connet to {} failed.".format(self.__dbname))
+            log.debug("No connection to {} failed.".format(self.__dbname))
             return None
+        
+        # 执行sql语句
         cur = self.__dbconn.cursor()
 
-        # 执行sql语句
         if type(sql) != str:
-            log.debug("Sql must be a string.")
-            self.__close__()
+            log.debug("Sql have to be a str")
             return None
         try:
             if type(vals) != tuple:
@@ -99,14 +135,12 @@ class DBoprBase:
             self.__dbconn.commit()
         except Exception as e:
             log.debug(e)
-            self.__close__()
             return None
         
         # 返回结果
         result = []
         for uni in cur:
             result.append(uni)
-        self.__close__()
         return result
     
     def isexist(self, table):
@@ -116,6 +150,11 @@ class DBoprBase:
         @param: table   表名
         @return: True 存在 False 不存在
         """""
+        # 连接不正常，停止执行
+        if self.__dbconn == None:
+            log.debug("No connection to {} failed.".format(self.__dbname))
+            return None
+
         if type(table) != str or table == "":
             log.debug("Invalid table name.")
             return False

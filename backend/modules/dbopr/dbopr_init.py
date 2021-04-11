@@ -24,7 +24,7 @@ def key_init():
     # 获取原始密钥
     orin_key = cfg.get(["ori_key"])
     if orin_key == None:
-        log.error("Getting ori_key failed.")
+        log.debug("Getting ori_key failed.")
         return -1
     else:
         log.debug("Getting ori_key: {}".format(orin_key))
@@ -50,9 +50,14 @@ def key_init():
 
     # 创建数据库，存储密钥
     dbopr = DBoprBase(dbname="shadow", dbtype=1)
+    ret = dbopr.connet()    #连接数据库
+    if ret != 0:
+        log.debug("connet to db:shadow failed")
+        return -1
     cl_sql = "drop table if exists Shadow"
     ret = dbopr.execute(cl_sql) #先删除原来的表
     if ret == None:
+        dbopr.close()
         return -1
 
     sql = "create table Shadow(\
@@ -60,10 +65,11 @@ def key_init():
             val  char(256));"
     ret = dbopr.execute(sql)
     if ret == None:
+        dbopr.close()
         return -1       
 
     shadows = {"activate": account_activate_key, "user": user_important_key,
-            "seesion":  session_token_key, "log": log_message_key,
+            "token":  session_token_key, "log": log_message_key,
             "business": business_message_key, "salt": hash_salt}
     success = 0
     for uni in shadows.keys():
@@ -80,6 +86,8 @@ def key_init():
     ret = dbopr.execute(sql)
     if ret != None:
         log.debug("{}".format(ret))
+    
+    dbopr.close()
     return 0
 
 def account_init():
@@ -90,23 +98,31 @@ def account_init():
     @return: 0成功 -1失败
     """""
     dbopr = DBoprBase("account", dbtype=1)
+    ret = dbopr.connet()    #连接数据库
+    if ret != 0:
+        log.debug("connet to db:account failed")
+        return -1
     cl_sql = "drop table if exists Account"
     ret = dbopr.execute(cl_sql)
     if ret == None:
+        dbopr.close()
         return -1
     
     sql = "create table Account(\
-            uid interger primary key,\
-            user nchar(1024) unique,\
-            nickname char(1024),\
-            passwd char(2048),\
-            email char(2048)\
+            uid integer primary key autoincrement,\
+            rid interger,\
+            user nchar(128) unique,\
+            nickname nchar(128),\
+            passwd char(256),\
+            email char(256)\
             );"
     ret = dbopr.execute(sql)
     if ret == None:
+        dbopr.close()
         return -1
     else:
         log.debug("Init table Account successfully.")
+        dbopr.close()
         return 0
 
 
