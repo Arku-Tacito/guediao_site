@@ -8,6 +8,7 @@
 import sqlite3
 import os, sys
 from backend.config.configbase import ConfigBase
+from backend.config.define import db_df
 from backend.modules.logopr.logbase import Log
 
 log = Log(__name__).config()
@@ -28,7 +29,7 @@ class DBoprBase:
     __dbconn = None # 数据连接
     __dbtype = ["business", "account", "log"]
     
-    def __init__(self, dbname=None, dbtype=0):
+    def __init__(self, dbname=None, dbtype=db_df.TYPE_BUSINESS):
         """""
         初始化函数
         ------------
@@ -80,7 +81,7 @@ class DBoprBase:
             log.debug("None database init.")
             return -1
         elif len(dbtype) < 0 or len(dbtype) >= len(self.__dbtype):
-            log.debug("Invalid dbtype. Auto set type: 0")
+            log.debug("Invalid dbtype. Auto set type: {}".format(db_df.TYPE_BUSINESS))
             dbtype = 0
         path = os.path.join(os.getenv("DATAFIGPATH"), self.__dbtype[dbtype])
         self.__dbname = os.path.join(path, dbname) 

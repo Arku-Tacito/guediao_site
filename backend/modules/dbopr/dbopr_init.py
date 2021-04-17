@@ -6,6 +6,7 @@
 """
 # _*_ coding: utf-8 _*_
 from backend.config.configbase import ConfigBase
+from backend.config.define import db_df
 from backend.modules.dbopr.dboprbase import DBoprBase
 from backend.modules.cypher.cypherbase import CypherBase
 from backend.modules.logopr.logbase import Log
@@ -49,31 +50,31 @@ def key_init():
     ))
 
     # 创建数据库，存储密钥
-    dbopr = DBoprBase(dbname="shadow", dbtype=1)
+    dbopr = DBoprBase(dbname=db_df.DB_SHADOW, dbtype=db_df.TYPE_ACCOUNT)
     ret = dbopr.connet()    #连接数据库
     if ret != 0:
-        log.debug("connet to db:shadow failed")
+        log.debug("connet to db:{} failed".format(db_df.DB_SHADOW))
         return -1
-    cl_sql = "drop table if exists Shadow"
+    cl_sql = "drop table if exists {}".format(db_df.DB_SHADOW)
     ret = dbopr.execute(cl_sql) #先删除原来的表
     if ret == None:
         dbopr.close()
         return -1
 
-    sql = "create table Shadow(\
-            name char(32),\
-            val  char(256));"
+    sql = "create table {}({} char(32),{}  char(256));".format(
+        db_df.TABLE_SHADOW, db_df.KEY_KEYNAME, db_df.KEY_KEYVAL)
     ret = dbopr.execute(sql)
     if ret == None:
         dbopr.close()
         return -1       
-
-    shadows = {"activate": account_activate_key, "user": user_important_key,
-            "token":  session_token_key, "log": log_message_key,
-            "business": business_message_key, "salt": hash_salt}
+    # 密钥要截断16位
+    shadows = {db_df.ACTIVATE_KEYNAME: account_activate_key[:16], db_df.USER_KEYNAME: user_important_key[:16],
+            db_df.TOKEN_KEYNAME:  session_token_key[:16], db_df.LOG_KEYNAME: log_message_key[:16],
+            db_df.BUSINESS_KEYNAME: business_message_key[:16], db_df.SALT_KEYNAME: hash_salt}
     success = 0
+    # 插入密钥
     for uni in shadows.keys():
-        sql = "insert into Shadow values('{}', '{}')".format(uni, shadows[uni])
+        sql = "insert into {} values('{}', '{}')".format(db_df.TABLE_SHADOW, uni, shadows[uni])
         ret = dbopr.execute(sql)
         if ret == None:
             log.debug("Insert key [{} : {}] failed.".format(uni, shadows[uni]))
@@ -82,7 +83,7 @@ def key_init():
     
     log.debug("{} keys insert successfully.".format(success))
     
-    sql = "select * from Shadow"
+    sql = "select * from {}".format(db_df.TABLE_SHADOW)
     ret = dbopr.execute(sql)
     if ret != None:
         log.debug("{}".format(ret))
@@ -97,31 +98,32 @@ def account_init():
     @param: 
     @return: 0成功 -1失败
     """""
-    dbopr = DBoprBase("account", dbtype=1)
+    dbopr = DBoprBase(db_df.DB_ACCOUNT, dbtype=db_df.TYPE_ACCOUNT)
     ret = dbopr.connet()    #连接数据库
     if ret != 0:
-        log.debug("connet to db:account failed")
+        log.debug("connet to db:{} failed".format(db_df.DB_ACCOUNT))
         return -1
-    cl_sql = "drop table if exists Account"
+    cl_sql = "drop table if exists {}".format(db_df.TABLE_ACCOUNT)
     ret = dbopr.execute(cl_sql)
     if ret == None:
         dbopr.close()
         return -1
     
-    sql = "create table Account(\
-            uid integer primary key autoincrement,\
-            rid interger,\
-            user nchar(128) unique,\
-            nickname nchar(128),\
-            passwd char(256),\
-            email char(256)\
-            );"
+    sql = "create table {}(\
+            {} integer primary key autoincrement,\
+            {} interger,\
+            {} nchar(128) unique,\
+            {} nchar(128),\
+            {} char(256),\
+            {} char(256)\
+            );".format(db_df.TABLE_ACCOUNT, db_df.KEY_UID, db_df.KEY_RID,
+                        db_df.KEY_USER, db_df.KEY_NICKNAME, db_df.KEY_PASSWD, db_df.KEY_EMAIL)
     ret = dbopr.execute(sql)
     if ret == None:
         dbopr.close()
         return -1
     else:
-        log.debug("Init table Account successfully.")
+        log.debug("Init table {} successfully.".format(db_df.TABLE_ACCOUNT))
         dbopr.close()
         return 0
 
