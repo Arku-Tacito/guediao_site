@@ -24,10 +24,11 @@ class AuthBase:
         self.__salt = None                  #哈希盐值
         self.__activate_key = None          #激活密钥
         self.__usr_key = None               #用户重要信息密钥
-        self.__token_key = None             #token密钥
+        self.__token_key = None             #token密钥——与用户共享的
         self.__cyphor =  CypherBase()       #加密模块
         self.__usrdb = DBoprBase(dbname=db_df.DB_ACCOUNT, dbtype=db_df.TYPE_ACCOUNT)    #用户数据库
         self.__usrtable = db_df.TABLE_ACCOUNT
+        self.__timeout = ConfigBase().get(["session", "timeout"])
         
         # 获取相关密钥
         db = DBoprBase(db_df.DB_SHADOW, dbtype=db_df.TYPE_ACCOUNT)
@@ -98,6 +99,18 @@ class AuthBase:
         sql = "select * from {}".format(self.__usrtable)
         ret = self.__usrdb.execute(sql)
         print(ret)
+
+    def get_activate_key(self):
+        return self.__activate_key
+
+    def get_token_key(self):
+        return self.__token_key
+    
+    def get_hash_salt(self):
+        return self.__salt
+    
+    def get_usr_key(self):
+        return self.__usr_key
     
     def sign_up(self, usrinfo):
         """""
@@ -120,12 +133,12 @@ class AuthBase:
             return auth_df.FAILED
 
         # 提取用户信息
-        if usrinfo["user"] == None:     #用户名
+        if usrinfo[db_df.KEY_USER] == None:     #用户名
             log.debug("no usrname.")
             self.__usrdb.close()
             return auth_df.FAILED
         else:
-            exist_ret = self.__isexist__("user", usrinfo["user"])
+            exist_ret = self.__isexist__(db_df.KEY_USER, usrinfo[db_df.KEY_USER])
             if exist_ret == -1:
                 log.debug("unkwon failed.")
                 self.__usrdb.close()
@@ -134,12 +147,17 @@ class AuthBase:
                 log.debug("user is exist.") #用户名存在
                 self.__usrdb.close()
                 return auth_df.USER_EXIST
-        if usrinfo["email"] == None:    #邮箱
+        if usrinfo[db_df.KEY_EMAIL] == None:    #邮箱
             log.debug("no email.")
             self.__usrdb.close()
             return auth_df.FAILED
         else:
-            exist_ret = self.__isexist__("email", usrinfo["email"])
+            email = self.__cyphor.encrypt_AES(text=usrinfo[db_df.KEY_EMAIL], key=self.__usr_key)    #邮箱加密
+            if email == None:
+                log.debug("encrypt email failed.")
+                self.__usrdb.close()
+                return auth_df.FAILED
+            exist_ret = self.__isexist__(db_df.KEY_EMAIL, email)
             if exist_ret == -1:
                 log.debug("unkwon failed.")
                 self.__usrdb.close()
@@ -148,26 +166,22 @@ class AuthBase:
                 log.debug("email is exist.")    #邮箱存在
                 self.__usrdb.close()
                 return auth_df.EMAIL_EXIST
-        if usrinfo["passwd"] == None:   #密码
+        if usrinfo[db_df.KEY_PASSWD] == None:   #密码
             log.debug("no passwd")
             self.__usrdb.close()
             return auth_df.FAILED
         
         # 加密信息
-        passwd = self.__cyphor.hash(text=usrinfo["passwd"], salt=self.__salt)   #密钥直接哈希
+        passwd = self.__cyphor.hash(text=usrinfo[db_df.KEY_PASSWD], salt=self.__salt)   #密钥直接哈希
         if passwd == None:
             log.debug("hash passwd failed.")
             self.__usrdb.close()
             return auth_df.FAILED
-        email = self.__cyphor.encrypt_AES(text=usrinfo["email"], key=self.__usr_key)    #邮箱加密
-        if email == None:
-            log.debug("encrypt email failed.")
-            self.__usrdb.close()
-            return auth_df.FAILED
         
         # 写入数据库
-        sql = "insert into {}(rid, user, nickname, passwd, email) values({}, '{}', '{}', '{}', '{}')".format(
-                self.__usrtable, 0, usrinfo['user'], usrinfo['nickname'], passwd, email)
+        sql = "insert into {}({}, {}, {}, {}, {}) values({}, '{}', '{}', '{}', '{}')".format(
+                self.__usrtable, db_df.KEY_RID, db_df.KEY_USER, db_df.KEY_NICKNAME, db_df.KEY_PASSWD, db_df.KEY_EMAIL, 
+                0, usrinfo[db_df.KEY_USER], usrinfo[db_df.KEY_NICKNAME], passwd, email)
         ret = self.__usrdb.execute(sql)
         if ret == None:
             log.debug("insert user failed.")
@@ -192,6 +206,9 @@ class AuthBase:
         if passwd == None:
             log.debug("passwd is none.")
             return auth_df.FAILED
+        if not self.__key_available():
+            log.debug("keys are invailable.")
+            return auth_df.FAILED
         
         # 创建连接
         ret = self.__usrdb.connet()
@@ -207,20 +224,91 @@ class AuthBase:
         # 结果检查
         if ret == None:
             log.debug("select failed.")
+            self.__usrdb.close()
             return auth_df.FAILED
         if len(ret) == 0:   #用户名不存在
             log.debug("user {} not found.".format(user))
+            self.__usrdb.close()
             return auth_df.USER_NOTEXIST
+        
         result_passwd = ret[0][0]
+        passwd = self.__cyphor.hash(passwd, self.__salt)    # 密码哈希
         if result_passwd != passwd: #密码错误
             log.debug("passwd incorrect.")
+            self.__usrdb.close()
             return auth_df.PASSWD_INCORRECT
         
         # 断开连接，返回
         self.__usrdb.close()
         return auth_df.SUCCESS
         
+    def get_user_cookie(self, user):
+        """
+        生成并获取用户cookie(必须得用户登录后才能用)
+        cookie = E[usr_key](time) + hash(E[usr_key](user))
+        ------------
+        @param: user 用户名
+        @return:    成功返回cookie 失败返回None
+        """
+        if user == None:
+            log.debug("user is none")
+            return None
+        if not self.__key_available():
+            log.debug("keys are invailable.")
+            return None
+        
+        # 获取时间
+        thistime = str(int(time.time()))
+        log.debug("get time: {}".format(thistime))
+        en_time = self.__cyphor.encrypt_AES(thistime, key=self.__usr_key)
+        en_usr = self.__cyphor.encrypt_AES(user, key=self.__usr_key)
+        hash_usr = self.__cyphor.hash(en_usr, salt=self.__salt)
+        if en_time == None or hash_usr == None:
+            log.debug("encrypt failed.")
+            return None
+        
+        return en_time + hash_usr
 
+    def auth_user_cookie(self, user, cookie):
+        """
+        cookie认证
+        ------------
+        @param: user    用户名
+        @param：cookie  
+        @return: 0成功 other失败
+        """
+        if user == None:
+            log.debug("user is none.")
+            return auth_df.FAILED
+        if cookie == None:
+            log.debug("cookie is none.")
+            return auth_df.FAILED
+        if not self.__key_available():
+            log.debug("keys are invailable.")
+            return auth_df.FAILED
+        
+        # 拆解cookie
+        sum_len = len(cookie)   #cookie总长
+        en_usr = self.__cyphor.encrypt_AES(user, key=self.__usr_key)
+        hash_usr = self.__cyphor.hash(en_usr, salt=self.__salt)
+        usr_len = len(hash_usr) #cookie中user部分长度
+
+        time_part = cookie[:sum_len - usr_len]  #时间部分
+        usr_part = cookie[sum_len - usr_len:]   #用户部分
+        log.debug("time_part:{}\nusr:{}".format(time_part, usr_part))
+
+        # 校验cookie
+        if usr_part != hash_usr:    #用户部分错误
+            log.debug("cookie invalid.")
+            return auth_df.COOKIE_INCORRECT
+        
+        that_time = int(self.__cyphor.decrypt_AES(time_part, key=self.__usr_key))
+        this_time = int(time.time())
+        if that_time - this_time > self.__timeout:    #cookie过期
+            log.debug("cookie is expired.")
+            return auth_df.TIME_EXPIRED
+        
+        return auth_df.SUCCESS
         
         
 
@@ -234,12 +322,18 @@ if __name__ == "__main__":
     auth.print_user()
 
     # 登录
-    salt = "I0k3i0ustmU4CcOe98/0Gw=="
-    cypor = CypherBase()
-    passwd = cypor.hash("aa123", salt)
-    ret = auth.sign_in("arku", passwd)
+    ret = auth.sign_in("arku", "aa123")
     if ret == 0:
         print("log in success.")
     else:
         print("log failed")
 
+    # 获取token
+    ret = auth.get_user_cookie("arku")
+    print("cookie: {}".format(ret))
+
+    ret = auth.auth_user_cookie("arku", ret)
+    if ret == 0:
+        print("cookie is corrected.")
+    else:
+        print("cookie is not corrected.")

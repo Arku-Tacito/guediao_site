@@ -1,5 +1,15 @@
 {
     "host": "0.0.0.0",
-    "port": 1298,
-    "ori_key": "guediao_site"
+    "port": 8080,
+    "ori_key": "guediao_site",
+    "session":{
+        "timeout":3600,
+        "security_timeout":600,
+        "max_connet_num":10
+    },
+    "server_port":{
+        "account":4836,
+        "log":4837,
+        "mail":4839
+    }
 }

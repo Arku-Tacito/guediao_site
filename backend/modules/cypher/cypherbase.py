@@ -177,15 +177,19 @@ class CypherBase:
             log.debug("Invalid text.")
             return None
         
-        #确定盐值
+        # 确定盐值
         if salt == None or type(salt) != str:
             hash_salt = self.__salt
         else:
             hash_salt = salt
-        
         text = text + hash_salt
-        self.__hash.update(text.encode('utf-8'))
-        return self.__hash.hexdigest()
+
+        # 哈希
+        hhash = hashlib.sha256()
+        hhash.update(text.encode('utf-8'))
+        return str(hhash.hexdigest())
+        # self.__hash.update(text.encode('utf-8'))
+        # return self.__hash.hexdigest()
 
 if __name__ == "__main__":
     cyphor = CypherBase()
