@@ -8,7 +8,7 @@ from backend.config.define import auth_df, db_df, sv_df
 
 authbase = AuthBase()
 cookie_timeout = ConfigBase().get(["cookie", "timout_days"])
-app = Flask(__name__)
+app = Flask(__name__, static_folder='../frontend/', static_url_path="")
 
 def make_responese_msg(data=None, status="failed", msg="none"):
     """
@@ -54,9 +54,12 @@ def set_cookie(resp, user=None):
     resp.set_cookie("user", user, expires=expires, httponly=True)
     resp.set_cookie("ticket", ret, expires=expires, httponly=True)
     return resp
-
 @app.route('/')
-def hello_world():
+def root():
+    return app.send_static_file("index.html")
+
+@app.route('/index')
+def index():
     resp = make_responese_msg()
     resp = set_cookie(resp, "arku")
     return resp
