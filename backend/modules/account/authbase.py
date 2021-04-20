@@ -242,13 +242,13 @@ class AuthBase:
         self.__usrdb.close()
         return auth_df.SUCCESS
         
-    def get_user_cookie(self, user):
+    def get_user_ticket(self, user):
         """
-        生成并获取用户cookie(必须得用户登录后才能用)
-        cookie = E[usr_key](time) + hash(E[usr_key](user))
+        生成并获取用户ticket(必须得用户登录后才能用)
+        ticket = E[usr_key](time) + hash(E[usr_key](user))
         ------------
         @param: user 用户名
-        @return:    成功返回cookie 失败返回None
+        @return:    成功返回ticket 失败返回None
         """
         if user == None:
             log.debug("user is none")
@@ -269,47 +269,46 @@ class AuthBase:
         
         return en_time + hash_usr
 
-    def auth_user_cookie(self, user, cookie):
+    def auth_user_ticket(self, user, ticket):
         """
-        cookie认证
+        ticket认证
         ------------
         @param: user    用户名
-        @param：cookie  
+        @param：ticket  
         @return: 0成功 other失败
         """
         if user == None:
             log.debug("user is none.")
             return auth_df.FAILED
-        if cookie == None:
-            log.debug("cookie is none.")
+        if ticket == None:
+            log.debug("ticket is none.")
             return auth_df.FAILED
         if not self.__key_available():
             log.debug("keys are invailable.")
             return auth_df.FAILED
         
-        # 拆解cookie
-        sum_len = len(cookie)   #cookie总长
+        # 拆解ticket
+        sum_len = len(ticket)   #ticket总长
         en_usr = self.__cyphor.encrypt_AES(user, key=self.__usr_key)
         hash_usr = self.__cyphor.hash(en_usr, salt=self.__salt)
-        usr_len = len(hash_usr) #cookie中user部分长度
+        usr_len = len(hash_usr) #ticket中user部分长度
 
-        time_part = cookie[:sum_len - usr_len]  #时间部分
-        usr_part = cookie[sum_len - usr_len:]   #用户部分
+        time_part = ticket[:sum_len - usr_len]  #时间部分
+        usr_part = ticket[sum_len - usr_len:]   #用户部分
         log.debug("time_part:{}\nusr:{}".format(time_part, usr_part))
 
-        # 校验cookie
+        # 校验ticket
         if usr_part != hash_usr:    #用户部分错误
-            log.debug("cookie invalid.")
-            return auth_df.COOKIE_INCORRECT
+            log.debug("ticket invalid.")
+            return auth_df.ticket_INCORRECT
         
         that_time = int(self.__cyphor.decrypt_AES(time_part, key=self.__usr_key))
         this_time = int(time.time())
-        if that_time - this_time > self.__timeout:    #cookie过期
-            log.debug("cookie is expired.")
+        if that_time - this_time > self.__timeout:    #ticket过期
+            log.debug("ticket is expired.")
             return auth_df.TIME_EXPIRED
         
         return auth_df.SUCCESS
-        
         
 
 if __name__ == "__main__": 
@@ -329,11 +328,11 @@ if __name__ == "__main__":
         print("log failed")
 
     # 获取token
-    ret = auth.get_user_cookie("arku")
-    print("cookie: {}".format(ret))
+    ret = auth.get_user_ticket("arku")
+    print("ticket: {}".format(ret))
 
-    ret = auth.auth_user_cookie("arku", ret)
+    ret = auth.auth_user_ticket("arku", ret)
     if ret == 0:
-        print("cookie is corrected.")
+        print("ticket is corrected.")
     else:
-        print("cookie is not corrected.")
+        print("ticket is not corrected.")

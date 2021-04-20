@@ -193,7 +193,8 @@ class CypherBase:
 
 if __name__ == "__main__":
     cyphor = CypherBase()
-    mtext = "thisismykey123456"
+    # mtext = "thisismykey123456"
+    mtext = "16"
     print("original text: {}\nlength: {}".format(mtext, len(mtext)))
     ctext = cyphor.encrypt_AES(mtext)
     print("encrypt text: {}\nlength: {}".format(ctext, len(ctext)))

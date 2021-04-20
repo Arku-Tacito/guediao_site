@@ -7,6 +7,9 @@
         "security_timeout":600,
         "max_connet_num":10
     },
+    "cookie":{
+        "timout_days":1
+    },
     "server_port":{
         "account":4836,
         "log":4837,
