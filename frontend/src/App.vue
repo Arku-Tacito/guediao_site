@@ -1,5 +1,25 @@
 <template>
   <div id="app">
+    <h1>{{ msg }}</h1>
+  </div>
+</template>
+
+<script>
+export default {
+  name: 'app',
+  data () {
+    return {
+      msg: '欢迎来到粿条站'
+    }
+  }
+}
+</script>
+
+
+
+<!--
+<template>
+  <div id="app">
     <img src="./assets/logo.png">
     <h1>{{ msg }}</h1>
     <h2>Essential Links</h2>
@@ -58,3 +78,4 @@ a {
   color: #42b983;
 }
 </style>
+-->
