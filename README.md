@@ -10,3 +10,6 @@ for private practice and especially for Guediao Youth to use.
     - vuex
     - vue-router
     - nprogress
+    - axios
+    - js-sha3
+    - crypto-js

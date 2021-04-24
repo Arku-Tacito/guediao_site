@@ -8,6 +8,7 @@ import store from './store'
 import NOTFOUND_PAGE from "../views/404.vue"
 import INDEX_PAGE from "../views/index.vue"
 import LOGIN_PAGE from "../views/login.vue"
+import SIGNUP_PAGE from "../views/signup.vue"
 
 Vue.use(VueRouter)
 
@@ -23,6 +24,10 @@ const routes = [
 	{
 		path: '/login',
 		component: LOGIN_PAGE
+	},
+	{
+		path: '/signup',
+		component: SIGNUP_PAGE
 	},
 	{
 		path: "/404",
@@ -47,9 +52,9 @@ router.beforeEach((to, from, next) => {
 	}
 	else if (store.getters.isLogin) {//有登录的
 		next();
-	} 
-	else {//进入登录页面或404，就不跳转
-		if (to.path == '/login' || to.path == '/404') {
+	}
+	else {//进入登录注册页面或404，就不跳转
+		if (to.path == '/login' || to.path == '/404' || to.path == '/signup') {
 			next();
 		} else {//没登录，要跳转
 			let url = escape(to.fullPath);
