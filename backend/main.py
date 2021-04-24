@@ -10,6 +10,27 @@ authbase = AuthBase()
 cookie_timeout = ConfigBase().get(["cookie", "timout_days"])
 app = Flask(__name__, static_folder='../frontend/', static_url_path="")
 
+def auth_ticket():
+    """""
+    验证ticket
+    如果验证不通过, 返回制作好的response
+    ------------
+    @param: 
+    @return: ret 0成功 -1失败
+    @return: resp response 成功则返回None
+    """""
+    # 获取cookie
+    user = request.cookies.get("user")
+    ticket = request.cookies.get("ticket")
+    ip = request.remote_addr
+    ret = authbase.auth_user_ticket(user, ticket, ip)
+    if ret != auth_df.SUCCESS:
+        resp = make_responese_msg(status="nologin", msg="ticket not correct.")
+    else:
+        resp = None
+    
+    return ret, resp
+
 def make_responese_msg(data=None, status="failed", login_flag=False, token=None, msg="none"):
     """
     设置返回数据
@@ -39,18 +60,20 @@ def make_responese_msg(data=None, status="failed", login_flag=False, token=None,
         resp = make_response(json.dumps(result))
         return resp
 
-def set_cookie(resp, user=None):
+def set_cookie(resp, user=None, ip="0.0.0.0"):
     """""
     在response上设置cookie
     ------------
+    @param: resp response
     @param: user 用户名
+    @param: ip
     @return: 
     """""
     if user == None:
         return resp
 
     # 获取对应的ticket
-    ret = authbase.get_user_ticket(user)
+    ret = authbase.get_user_ticket(user, ip)
     if ret == None:
         return resp
     
@@ -59,27 +82,47 @@ def set_cookie(resp, user=None):
     resp.set_cookie("user", user, expires=expires, httponly=True)
     resp.set_cookie("ticket", ret, expires=expires, httponly=True)
     return resp
+
 @app.route('/')
 def root():
     return app.send_static_file("index.html")
 
 @app.route('/index')
 def index():
-    resp = make_responese_msg()
-    resp = set_cookie(resp, "arku")
+    # 验证ticket, 不通过直接返回response
+    ret, resp = auth_ticket()
+    if ret != auth_df.SUCCESS:
+        return resp
+    
+    # 制作成功response
+    resp = make_responese_msg(status="success", login_flag="true", msg="欢迎")
     return resp
 
 @app.route('/login')
 def login():
-    # 获取cookie
-    user = request.cookies.get("user")
-    ticket = request.cookies.get("ticket")
-    ret = authbase.auth_user_ticket(user, ticket)
-    if ret == auth_df.FAILED:
-        resp = make_responese_msg(msg="ticket not correct.")
-    else:
-        resp = make_responese_msg(status="success", msg="ticket correct")
+    data = request.get_json()['data']
+    # 登录并检查结果
+    try:
+        user = data['user']
+        passwd = data['passwd']
+        ret = authbase.log_in(user, passwd)
+    except Exception as e:
+        print(e)
+        resp = make_responese_msg(msg="服务端异常")
+        return resp
     
+    if ret == auth_df.PASSWD_INCORRECT:
+        resp = make_responese_msg(msg="密码错误")
+    elif ret == auth_df.USER_NOTEXIST:
+        resp = make_responese_msg(msg="用户不存在")
+    elif ret != auth_df.SUCCESS:
+        resp = make_responese_msg(msg="登录异常")
+    else:
+        resp = make_responese_msg(status="success", login_flag=True, msg="登录成功")
+        # 设置cookie
+        ip = request.remote_addr
+        resp = set_cookie(resp, user, ip)
+        
     return resp
 
 @app.route('/signup', methods=['POST'])
