@@ -98,7 +98,7 @@ def index():
     resp = make_responese_msg(status="success", login_flag="true", msg="欢迎")
     return resp
 
-@app.route('/login')
+@app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()['data']
     # 登录并检查结果

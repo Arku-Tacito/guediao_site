@@ -260,7 +260,6 @@ class AuthBase:
         
         # 获取时间
         thistime = str(int(time.time()))
-        log.debug("get time: {}".format(thistime))
         en_time = self.__cyphor.encrypt_AES(thistime, key=self.__usr_key)
         en_usr = self.__cyphor.encrypt_AES(user, key=self.__usr_key)
         hash_usr = self.__cyphor.hash(en_usr + ip, salt=self.__salt)
