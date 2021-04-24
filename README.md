@@ -13,3 +13,4 @@ for private practice and especially for Guediao Youth to use.
     - axios
     - js-sha3
     - crypto-js
+    - babel-plugin-transform-runtime -D

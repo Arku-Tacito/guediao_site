@@ -13,7 +13,7 @@
 </template>
 
 <script>
-import {request} from '../js/request.js';
+import { request } from '../js/request.js';
 export default {
     data(){
         return{}
@@ -29,8 +29,13 @@ export default {
                     "email": this.email
                 }
             };
-            let res = await request('/signup', 'post', data);
-
+            try {
+                let res = await request('/signup', 'post', data);//提交注册
+                window.alert(res.data.msg);
+                this.$router.push('/');//跳转
+            } catch(error) {
+                window.alert(error);
+            }
         },
         back(){
             this.$router.push("/");

@@ -32,13 +32,10 @@ axios.interceptors.response.use(
         if (conType == "application/json;charset=UTF-8") {
             if (response.data.status == 'success') {
                 return response.data;
-            } else if (response.data.status == 'fail') {
-                throw new Error(response.data.msg);
             } else if (response.data.status == 'nologin') {
-                router.push("/login")
+                router.push("/login");
                 throw new Error("请先登录您的账号");
             } else {
-                return response.data;
                 throw new Error("未知错误");
             }
         } else {
