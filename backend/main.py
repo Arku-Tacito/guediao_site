@@ -77,6 +77,24 @@ def login():
     
     return resp
 
+@app.route('/signup', methods=['POST'])
+def signup():
+    # 获取并处理表单
+    userinfo = request.get_json()['data']
+    
+    # 注册并检查结果
+    ret = authbase.sign_up(userinfo)
+    if ret == auth_df.EMAIL_EXIST:
+        resp = make_responese_msg(msg="邮箱已存在")
+    elif ret == auth_df.USER_EXIST:
+        resp = make_responese_msg(msg="用户名已存在")
+    elif ret != auth_df.SUCCESS:
+        resp = make_responese_msg(msg="未知错误")
+    else:
+        resp = make_responese_msg(status="success", msg="注册成功")
+    
+    return resp
+
 if __name__=="__main__":
     cfg = ConfigBase()
     host = cfg.get(["host"])

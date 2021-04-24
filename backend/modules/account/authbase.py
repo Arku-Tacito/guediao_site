@@ -192,7 +192,7 @@ class AuthBase:
         self.__usrdb.close()
         return auth_df.SUCCESS
     
-    def sign_in(self, user, passwd):
+    def log_in(self, user, passwd):
         """""
         用户登录
         ------------
@@ -242,12 +242,13 @@ class AuthBase:
         self.__usrdb.close()
         return auth_df.SUCCESS
         
-    def get_user_ticket(self, user):
+    def get_user_ticket(self, user, ip='0.0.0.0'):
         """
         生成并获取用户ticket(必须得用户登录后才能用)
-        ticket = E[usr_key](time) + hash(E[usr_key](user))
+        ticket = E[usr_key](time) + hash(E[usr_key](user) + ip)
         ------------
         @param: user 用户名
+        @param: ip  用户ip
         @return:    成功返回ticket 失败返回None
         """
         if user == None:
@@ -262,19 +263,20 @@ class AuthBase:
         log.debug("get time: {}".format(thistime))
         en_time = self.__cyphor.encrypt_AES(thistime, key=self.__usr_key)
         en_usr = self.__cyphor.encrypt_AES(user, key=self.__usr_key)
-        hash_usr = self.__cyphor.hash(en_usr, salt=self.__salt)
+        hash_usr = self.__cyphor.hash(en_usr + ip, salt=self.__salt)
         if en_time == None or hash_usr == None:
             log.debug("encrypt failed.")
             return None
         
         return en_time + hash_usr
 
-    def auth_user_ticket(self, user, ticket):
+    def auth_user_ticket(self, user, ticket, ip='0.0.0.0'):
         """
         ticket认证
         ------------
         @param: user    用户名
-        @param：ticket  
+        @param: ticket  凭证
+        @param: ip      用户ip
         @return: 0成功 other失败
         """
         if user == None:
@@ -290,7 +292,7 @@ class AuthBase:
         # 拆解ticket
         sum_len = len(ticket)   #ticket总长
         en_usr = self.__cyphor.encrypt_AES(user, key=self.__usr_key)
-        hash_usr = self.__cyphor.hash(en_usr, salt=self.__salt)
+        hash_usr = self.__cyphor.hash(en_usr + ip, salt=self.__salt)
         usr_len = len(hash_usr) #ticket中user部分长度
 
         time_part = ticket[:sum_len - usr_len]  #时间部分
@@ -321,7 +323,7 @@ if __name__ == "__main__":
     auth.print_user()
 
     # 登录
-    ret = auth.sign_in("arku", "aa123")
+    ret = auth.log_in("arku", "aa123")
     if ret == 0:
         print("log in success.")
     else:
