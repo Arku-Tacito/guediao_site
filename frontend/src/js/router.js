@@ -45,7 +45,7 @@ const router = new VueRouter({
 
 router.beforeEach((to, from, next) => {
 	NProgress.start();
-	store.commit("init");
+	store.commit("init");//初始化登录状态
 	if (canGoPath.indexOf(to.path) == -1) {//错误的路由
 		let url = escape(to.fullPath);
 		router.push("/404?redirect=" + url);		
