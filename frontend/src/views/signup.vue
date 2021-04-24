@@ -31,7 +31,7 @@ export default {
             };
             try {
                 let res = await request('/signup', 'post', data);//提交注册
-                window.alert(res.data.msg);
+                window.alert(res.msg);
                 this.$router.push('/');//跳转
             } catch(error) {
                 window.alert(error);
