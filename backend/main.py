@@ -10,20 +10,25 @@ authbase = AuthBase()
 cookie_timeout = ConfigBase().get(["cookie", "timout_days"])
 app = Flask(__name__, static_folder='../frontend/', static_url_path="")
 
-def make_responese_msg(data=None, status="failed", msg="none"):
+def make_responese_msg(data=None, status="failed", login_flag=False, token=None, msg="none"):
     """
     设置返回数据
     ------------
     @param: data    业务数据
     @param: status  业务处理结果
+    @param: login_flag  登录成功标记
+    @param: token   密钥
     @param: msg     附加信息 
     @return:    成功返回response 失败返回None
     """
     if data == None:
-        data = "none"
+        data = {}
     result = dict()
     result["data"] = data
     result["status"] = status
+    result["login_flag"] = "true" if login_flag else "false"
+    if token != None:
+        result["token_key"] = token
     result["msg"] = msg
     try:
         resp = make_response(json.dumps(result))
