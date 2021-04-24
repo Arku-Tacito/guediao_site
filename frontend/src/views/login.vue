@@ -11,19 +11,25 @@
 </template>
 
 <script>
+import { request } from '../js/request.js';
 export default {
     data(){
         return {
-            user_name: "",
-            passwd: "",
         }
     },
     methods:{
-        tologin() {
+        async tologin() {
+            //封装表单
+            var data = {
+                "data": {
+                    "user": this.user_name,
+                    "passwd": this.passwd
+                }
+            };
             try {
-                let user_name = this.user_name;
-                let passwd = this.passwd;
-                window.alert(user_name + passwd);
+                let res = await request('/login', 'post', data);//登录
+                window.alert(res.msg);
+                this.$router.push('/');
             } catch(error) {
                 window.alert(error);
             }
