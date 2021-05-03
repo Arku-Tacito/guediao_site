@@ -1,6 +1,7 @@
 import axios from 'axios';
 import NProgress from 'nprogress'
 import router from "./router.js"
+import store from "./store"
 import { baseUrl } from "./const.js";
 
 export function request(url, type = 'get', data = {}, responseType = 'json') {
@@ -33,13 +34,16 @@ axios.interceptors.response.use(
             if (response.data.status == 'success') {
                 return response.data;
             } else if (response.data.status == 'nologin') {
+                store.commit("setLoginflag", {flag: "false"});
                 router.push("/login");
                 throw new Error("请先登录您的账号");
+            } else if (response.data.msg != null) {
+                throw new Error(response.data.msg);
             } else {
                 throw new Error("未知错误");
             }
         } else {
-            return response
+            return response;
         }
     },
     error => {

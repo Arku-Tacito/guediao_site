@@ -29,6 +29,7 @@ export default {
             try {
                 let res = await request('/login', 'post', data);//登录
                 window.alert(res.msg);
+                this.$store.commit("setLoginflag", {flag: "true"});
                 this.$router.push('/index');
             } catch(error) {
                 window.alert(error);

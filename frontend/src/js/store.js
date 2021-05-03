@@ -23,7 +23,6 @@ export default new Vuex.Store({
     mutations: {//set方法
         init: state => {
             let flag = window.sessionStorage.getItem("login_flag");
-            window.console.log("============flag========== " + flag);
             if (flag == "true") {
                 state.login_flag = flag;
             } else {
@@ -39,6 +38,10 @@ export default new Vuex.Store({
         setTokenkey: (state, key) => {
             state.token_key = key;
             window.sessionStorage.setItem("token_key", key);
+        },
+        setLoginflag: (state, flag) => {
+            state.login_flag = flag;
+            window.sessionStorage.setItem("login_flag", flag);
         }
     },
     actions: {
