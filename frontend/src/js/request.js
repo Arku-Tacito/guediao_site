@@ -34,7 +34,7 @@ axios.interceptors.response.use(
             if (response.data.status == 'success') {
                 return response.data;
             } else if (response.data.status == 'nologin') {
-                store.commit("setLoginflag", {flag: "false"});
+                store.commit("setLoginflag", "false");
                 router.push("/login");
                 throw new Error("请先登录您的账号");
             } else if (response.data.msg != null) {
